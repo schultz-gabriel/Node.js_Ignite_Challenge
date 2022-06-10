@@ -44,18 +44,28 @@ app.post('/users', checksExistsUsername, (request, response) => {
 
   users.push(newUser);
 
-  response.send(newUser);
+  response.status(201).send(newUser);
 
 });
 
 app.get('/todos', checksExistsUserAccount, (request, response) => {
   const { user } = request;
   
-  response.send(user.todos)
+  response.status(200).send(user.todos);
 });
 
 app.post('/todos', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user, body } = request;
+  const {title, deadline} = body;
+  const newTodo = {
+    id: uuidv4(),
+    title,
+    done: false,
+    deadline: new Date(deadline),
+    created_at: new Date(),
+  };
+  user.todos.push(newTodo);
+  response.status(201).send(newTodo);
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
