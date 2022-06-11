@@ -20,7 +20,7 @@ function checksExistsUserAccount(request, response, next) {
 }
 
 function checksExistsUsername(request, response, next){
-  const {name, username} = request.body;
+  const { name, username } = request.body;
   const isUsernameAlreadyUsed = users.find((user) => user.username = username);
   if(isUsernameAlreadyUsed){
     return response.status(400).json({error: "Username is already used"})
@@ -44,19 +44,20 @@ app.post('/users', checksExistsUsername, (request, response) => {
 
   users.push(newUser);
 
-  response.status(201).send(newUser);
+  return response.status(201).send(newUser);
 
 });
 
 app.get('/todos', checksExistsUserAccount, (request, response) => {
   const { user } = request;
   
-  response.status(200).send(user.todos);
+  return response.status(200).send(user.todos);
 });
 
 app.post('/todos', checksExistsUserAccount, (request, response) => {
   const { user, body } = request;
-  const {title, deadline} = body;
+  const { title, deadline } = body;
+
   const newTodo = {
     id: uuidv4(),
     title,
@@ -65,11 +66,19 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
     created_at: new Date(),
   };
   user.todos.push(newTodo);
-  response.status(201).send(newTodo);
+
+  return response.status(201).send(newTodo);
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user } = request;
+  const { id } = request.params;
+  const { title, deadline } = request.body;
+
+  let selectedTodo = user.todos.find(todo => todo.id == id);
+  selectedTodo = { ...selectedTodo, title, deadline };
+
+  return response.send(selectedTodo);
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
