@@ -12,33 +12,30 @@ const users = [];
 function checksExistsUserAccount(request, response, next) {
   const { username } = request.headers;
   const user = users.find(user => user.username = username);
+
   if(!user){
     return response.status(400).json({error: "User does't exist"});
   }
   request.user = user;
-  return next()
-}
 
-function checksExistsUsername(request, response, next){
-  const { name, username } = request.body;
-  const isUsernameAlreadyUsed = users.find((user) => user.username = username);
-  if(isUsernameAlreadyUsed){
-    return response.status(400).json({error: "Username is already used"})
-  }
-  request.user = {
-    name,
-    username,
-  };
   return next();
 }
 
-app.post('/users', checksExistsUsername, (request, response) => {
-  const { user } = request;
+app.post('/users', (request, response) => {
+  const { name, username } = request.body;
+
+  const userAlreadyExists = users.some(
+    (user) => user.username === username
+  );
+
+  if (userAlreadyExists) {
+    return response.status(400).json({ error: "Customer already exists!" });
+  }
 
   const newUser = {
     id: uuidv4(),
-    name: user.name,
-    username: user.username,
+    name,
+    username,
     todos: []
   };
 
@@ -76,23 +73,45 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   const { title, deadline } = request.body;
 
   let selectedTodo = user.todos.find(todo => todo.id == id);
-  selectedTodo = { ...selectedTodo, title, deadline };
 
-  return response.send(selectedTodo);
+  if(!selectedTodo){
+    return response.status(404).json({ error: "Todo doesn't exist" });
+  }
+
+  selectedTodo.title = title;
+  selectedTodo.deadline = deadline;
+
+  return response.status(201).json(selectedTodo);
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
   const { user } = request;
   const { id } = request.params;
-  const { done } = request.body;
   
-  let selectedTodo = user.todos.find(todo => todo.id == id);
-  selectedTodo.done = done;
+  let selectedTodo = user.todos.find(todo => todo.id === id);
+
+  if(!selectedTodo){
+    return response.status(404).json({ error: "It's not possible to change non existing todo"});
+  }
+
+  selectedTodo.done = true;
   
-  return response.status(204).send(selectedTodo)});
+  return response.status(201).json(selectedTodo);
+});
 
 app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user } = request;
+  const { id } = request.params;
+
+  let selectedTodo = user.todos.find(todo => todo.id === id);
+
+  if(!selectedTodo){
+    return response.status(404).json({ error: "It's not possible to delete a non existing todo"});
+  }
+  
+  user.todos.splice(selectedTodo, 1);
+
+  response.status(204).send();
 });
 
 module.exports = app;
